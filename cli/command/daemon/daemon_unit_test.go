@@ -1,6 +1,6 @@
 // +build daemon
 
-package main
+package daemon
 
 import (
 	"io/ioutil"
@@ -15,7 +15,7 @@ func stubRun(cmd *cobra.Command, args []string) error {
 }
 
 func TestDaemonCommandHelp(t *testing.T) {
-	cmd := newDaemonCommand()
+	cmd := NewDaemonCommand()
 	cmd.RunE = stubRun
 	cmd.SetArgs([]string{"--help"})
 	cmd.SetOutput(ioutil.Discard)
@@ -24,7 +24,7 @@ func TestDaemonCommandHelp(t *testing.T) {
 }
 
 func TestDaemonCommand(t *testing.T) {
-	cmd := newDaemonCommand()
+	cmd := NewDaemonCommand()
 	cmd.RunE = stubRun
 	cmd.SetArgs([]string{"--containerd", "/foo"})
 	cmd.SetOutput(ioutil.Discard)

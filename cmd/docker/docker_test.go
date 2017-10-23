@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/docker/cli/cli/command"
+	"github.com/docker/cli/cli/command/commands"
 	"github.com/docker/cli/cli/debug"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ import (
 func TestClientDebugEnabled(t *testing.T) {
 	defer debug.Disable()
 
-	cmd := newDockerCommand(&command.DockerCli{})
+	cmd := commands.NewDockerCommand(&command.DockerCli{}, commands.AddCommands)
 	cmd.Flags().Set("debug", "true")
 
 	err := cmd.PersistentPreRunE(cmd, []string{})
@@ -25,7 +26,7 @@ func TestClientDebugEnabled(t *testing.T) {
 
 func TestExitStatusForInvalidSubcommandWithHelpFlag(t *testing.T) {
 	discard := ioutil.Discard
-	cmd := newDockerCommand(command.NewDockerCli(os.Stdin, discard, discard))
+	cmd := commands.NewDockerCommand(command.NewDockerCli(os.Stdin, discard, discard), commands.AddCommands)
 	cmd.SetArgs([]string{"help", "invalid"})
 	err := cmd.Execute()
 	assert.EqualError(t, err, "unknown help topic: invalid")
