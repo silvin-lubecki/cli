@@ -177,11 +177,11 @@ func TestHistoryContext_Table(t *testing.T) {
 			CreatedBy: "/bin/bash ls && npm i && npm run test && karma -c karma.conf.js start && npm start && more commands here && the list goes on",
 			Size:      int64(182964289),
 			Comment:   "Hi",
-			Tags:      []string{"image:tag2"},
+			Annotations:      []string{"image:tag2"},
 		},
-		{ID: "imageID2", Created: unixTime, CreatedBy: "/bin/bash echo", Size: int64(182964289), Comment: "Hi", Tags: []string{"image:tag2"}},
-		{ID: "imageID3", Created: unixTime, CreatedBy: "/bin/bash ls", Size: int64(182964289), Comment: "Hi", Tags: []string{"image:tag2"}},
-		{ID: "imageID4", Created: unixTime, CreatedBy: "/bin/bash grep", Size: int64(182964289), Comment: "Hi", Tags: []string{"image:tag2"}},
+		{ID: "imageID2", Created: unixTime, CreatedBy: "/bin/bash echo", Size: int64(182964289), Comment: "Hi", Annotations: []string{"image:tag2"}},
+		{ID: "imageID3", Created: unixTime, CreatedBy: "/bin/bash ls", Size: int64(182964289), Comment: "Hi", Annotations: []string{"image:tag2"}},
+		{ID: "imageID4", Created: unixTime, CreatedBy: "/bin/bash grep", Size: int64(182964289), Comment: "Hi", Annotations: []string{"image:tag2"}},
 	}
 	// nolint: lll
 	expectedNoTrunc := `IMAGE               CREATED             CREATED BY                                                                                                                     SIZE                COMMENT

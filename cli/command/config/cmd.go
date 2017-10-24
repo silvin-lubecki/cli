@@ -15,7 +15,7 @@ func NewConfigCommand(dockerCli *command.DockerCli) *cobra.Command {
 		Short: "Manage Docker configs",
 		Args:  cli.NoArgs,
 		RunE:  command.ShowHelp(dockerCli.Err()),
-		Tags:  map[string]string{"version": "1.30"},
+		Annotations:  map[string]string{"version": "1.30"},
 	}
 	cmd.AddCommand(
 		newConfigListCommand(dockerCli),

@@ -285,9 +285,9 @@ image_id: imageID3
 
 	for _, testcase := range cases {
 		images := []types.ImageSummary{
-			{ID: "imageID1", RepoTags: []string{"image:tag1"}, RepoDigests: []string{"image@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf"}, Created: unixTime},
-			{ID: "imageID2", RepoTags: []string{"image:tag2"}, Created: unixTime},
-			{ID: "imageID3", RepoTags: []string{"<none>:<none>"}, RepoDigests: []string{"<none>@<none>"}, Created: unixTime},
+			{ID: "imageID1", RepoAnnotations: []string{"image:tag1"}, RepoDigests: []string{"image@sha256:cbbf2f9a99b47fc460d422812b6a5adff7dfee951d8fa2e4a98caa0382cfbdbf"}, Created: unixTime},
+			{ID: "imageID2", RepoAnnotations: []string{"image:tag2"}, Created: unixTime},
+			{ID: "imageID3", RepoAnnotations: []string{"<none>:<none>"}, RepoDigests: []string{"<none>@<none>"}, Created: unixTime},
 		}
 		out := bytes.NewBufferString("")
 		testcase.context.Output = out
