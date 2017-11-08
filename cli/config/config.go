@@ -8,7 +8,6 @@ import (
 
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/credentials"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/pkg/errors"
 )
@@ -38,26 +37,6 @@ func Dir() string {
 // SetDir sets the directory the configuration file is stored in
 func SetDir(dir string) {
 	configDir = dir
-}
-
-// LegacyLoadFromReader is a convenience function that creates a ConfigFile object from
-// a non-nested reader
-func LegacyLoadFromReader(configData io.Reader) (*configfile.ConfigFile, error) {
-	configFile := configfile.ConfigFile{
-		AuthConfigs: make(map[string]types.AuthConfig),
-	}
-	err := configFile.LegacyLoadFromReader(configData)
-	return &configFile, err
-}
-
-// LoadFromReader is a convenience function that creates a ConfigFile object from
-// a reader
-func LoadFromReader(configData io.Reader) (*configfile.ConfigFile, error) {
-	configFile := configfile.ConfigFile{
-		AuthConfigs: make(map[string]types.AuthConfig),
-	}
-	err := configFile.LoadFromReader(configData)
-	return &configFile, err
 }
 
 // Load reads the configuration files in the given directory, and sets up
