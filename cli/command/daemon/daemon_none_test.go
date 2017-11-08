@@ -1,6 +1,6 @@
 // +build !daemon
 
-package main
+package daemon
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestDaemonCommand(t *testing.T) {
-	cmd := newDaemonCommand()
+	cmd := NewDaemonCommand()
 	cmd.SetArgs([]string{"--version"})
 	err := cmd.Execute()
 

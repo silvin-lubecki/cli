@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,10 +12,27 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/credentials"
 	"github.com/docker/cli/internal/test/testutil"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func loadFromReader(configData io.Reader) (*configfile.ConfigFile, error) {
+	configFile := configfile.ConfigFile{
+		AuthConfigs: make(map[string]types.AuthConfig),
+	}
+	err := configFile.LoadFromReader(configData)
+	return &configFile, err
+}
+
+func legacyLoadFromReader(configData io.Reader) (*configfile.ConfigFile, error) {
+	configFile := configfile.ConfigFile{
+		AuthConfigs: make(map[string]types.AuthConfig),
+	}
+	err := configFile.LegacyLoadFromReader(configData)
+	return &configFile, err
+}
 
 func setupConfigDir(t *testing.T) (string, func()) {
 	tmpdir, err := ioutil.TempDir("", "config-test")
@@ -425,7 +443,7 @@ func TestConfigDir(t *testing.T) {
 func TestJSONReaderNoFile(t *testing.T) {
 	js := ` { "auths": { "https://index.docker.io/v1/": { "auth": "am9lam9lOmhlbGxv", "email": "user@example.com" } } }`
 
-	config, err := LoadFromReader(strings.NewReader(js))
+	config, err := loadFromReader(strings.NewReader(js))
 	require.NoError(t, err)
 
 	ac := config.AuthConfigs["https://index.docker.io/v1/"]
@@ -438,7 +456,7 @@ func TestJSONReaderNoFile(t *testing.T) {
 func TestOldJSONReaderNoFile(t *testing.T) {
 	js := `{"https://index.docker.io/v1/":{"auth":"am9lam9lOmhlbGxv","email":"user@example.com"}}`
 
-	config, err := LegacyLoadFromReader(strings.NewReader(js))
+	config, err := legacyLoadFromReader(strings.NewReader(js))
 	require.NoError(t, err)
 
 	ac := config.AuthConfigs["https://index.docker.io/v1/"]
@@ -452,7 +470,7 @@ func TestJSONWithPsFormatNoFile(t *testing.T) {
 		"auths": { "https://index.docker.io/v1/": { "auth": "am9lam9lOmhlbGxv", "email": "user@example.com" } },
 		"psFormat": "table {{.ID}}\\t{{.Label \"com.docker.label.cpu\"}}"
 }`
-	config, err := LoadFromReader(strings.NewReader(js))
+	config, err := loadFromReader(strings.NewReader(js))
 	require.NoError(t, err)
 
 	if config.PsFormat != `table {{.ID}}\t{{.Label "com.docker.label.cpu"}}` {
@@ -466,7 +484,7 @@ func TestJSONSaveWithNoFile(t *testing.T) {
 		"auths": { "https://index.docker.io/v1/": { "auth": "am9lam9lOmhlbGxv" } },
 		"psFormat": "table {{.ID}}\\t{{.Label \"com.docker.label.cpu\"}}"
 }`
-	config, err := LoadFromReader(strings.NewReader(js))
+	config, err := loadFromReader(strings.NewReader(js))
 	require.NoError(t, err)
 	err = config.Save()
 	testutil.ErrorContains(t, err, "with empty filename")
@@ -497,7 +515,7 @@ func TestJSONSaveWithNoFile(t *testing.T) {
 
 func TestLegacyJSONSaveWithNoFile(t *testing.T) {
 	js := `{"https://index.docker.io/v1/":{"auth":"am9lam9lOmhlbGxv","email":"user@example.com"}}`
-	config, err := LegacyLoadFromReader(strings.NewReader(js))
+	config, err := legacyLoadFromReader(strings.NewReader(js))
 	require.NoError(t, err)
 	err = config.Save()
 	testutil.ErrorContains(t, err, "with empty filename")
