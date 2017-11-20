@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
+	"github.com/docker/cli/cli/command/orchestrator"
 	"github.com/docker/cli/templates"
 	"github.com/docker/docker/api/types"
 	"github.com/spf13/cobra"
@@ -23,6 +24,7 @@ Client:{{if ne .Platform.Name ""}} {{.Platform.Name}}{{end}}
  Git commit:	{{.GitCommit}}
  Built:	{{.BuildTime}}
  OS/Arch:	{{.Os}}/{{.Arch}}
+ Orchestrator:	{{.Client.Orchestrator}}
 {{- end}}
 
 {{- if .ServerOK}}{{with .Server}}
@@ -69,6 +71,7 @@ type clientVersion struct {
 	Os                string
 	Arch              string
 	BuildTime         string `json:",omitempty"`
+	Orchestrator      string `json:",omitempty"`
 }
 
 // ServerOK returns true when the client could connect to the docker server
@@ -133,6 +136,7 @@ func runVersion(dockerCli *command.DockerCli, opts *versionOptions) error {
 			BuildTime:         cli.BuildTime,
 			Os:                runtime.GOOS,
 			Arch:              runtime.GOARCH,
+			Orchestrator:      string(orchestrator.GetOrchestrator(dockerCli)),
 		},
 	}
 	vd.Client.Platform.Name = cli.PlatformName
