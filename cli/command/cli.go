@@ -42,6 +42,7 @@ type Cli interface {
 	SetIn(in *InStream)
 	ConfigFile() *configfile.ConfigFile
 	ServerInfo() ServerInfo
+	ClientInfo() ClientInfo
 	NotaryClient(imgRefAndAuth trust.ImageRefAndAuth, actions []string) (notaryclient.Repository, error)
 }
 
@@ -55,6 +56,7 @@ type DockerCli struct {
 	client         client.APIClient
 	defaultVersion string
 	server         ServerInfo
+	clientInfo     ClientInfo
 }
 
 // DefaultVersion returns api.defaultVersion or DOCKER_API_VERSION if specified.
@@ -107,6 +109,11 @@ func (cli *DockerCli) ServerInfo() ServerInfo {
 	return cli.server
 }
 
+// ClientInfo returns the client details
+func (cli *DockerCli) ClientInfo() ClientInfo {
+	return cli.clientInfo
+}
+
 // Initialize the dockerCli runs initialization that must happen after command
 // line flags are parsed.
 func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
@@ -125,6 +132,8 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	if err != nil {
 		return err
 	}
+	orchestrator := GetOrchestrator(cli.configFile.Orchestrator)
+	cli.clientInfo = ClientInfo{HasKubernetes: orchestrator == OrchestratorKubernetes}
 	cli.initializeFromClient()
 	return nil
 }
@@ -174,6 +183,11 @@ func (cli *DockerCli) NotaryClient(imgRefAndAuth trust.ImageRefAndAuth, actions 
 type ServerInfo struct {
 	HasExperimental bool
 	OSType          string
+}
+
+// ClientInfo store details about the supported features of the client
+type ClientInfo struct {
+	HasKubernetes bool
 }
 
 // NewDockerCli returns a DockerCli instance with IO output and error streams set by in, out and err.

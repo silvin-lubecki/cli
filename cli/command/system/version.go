@@ -135,7 +135,7 @@ func runVersion(dockerCli *command.DockerCli, opts *versionOptions) error {
 			BuildTime:         cli.BuildTime,
 			Os:                runtime.GOOS,
 			Arch:              runtime.GOARCH,
-			Orchestrator:      string(command.GetOrchestrator(dockerCli)),
+			Orchestrator:      string(command.GetOrchestrator(dockerCli.ConfigFile().Orchestrator)),
 		},
 	}
 	vd.Client.Platform.Name = cli.PlatformName
