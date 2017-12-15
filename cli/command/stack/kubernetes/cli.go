@@ -6,10 +6,12 @@ import (
 
 	"github.com/docker/cli/cli/command"
 	composev1beta1 "github.com/docker/cli/kubernetes/client/clientset_generated/clientset/typed/compose/v1beta1"
+	composev1beta2 "github.com/docker/cli/kubernetes/client/clientset_generated/clientset/typed/compose/v1beta2"
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/spf13/cobra"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/rest"
 )
 
 // KubeCli holds kubernetes specifics (client, namespace) with the command.Cli
@@ -72,4 +74,16 @@ func (c *KubeCli) stacks() (composev1beta1.StackInterface, error) {
 	}
 
 	return clientSet.Stacks(c.kubeNamespace), nil
+}
+
+func (c * KubeCli) restClientv1beta2() (rest.Interface, error) {
+	err := APIPresent(c.kubeConfig)
+        if err != nil {
+                return nil, err
+        }
+	clientSet, err := composev1beta2.NewForConfig(c.kubeConfig)
+        if err != nil {
+                return nil, err
+        }
+	return clientSet.RESTClient(), nil
 }
