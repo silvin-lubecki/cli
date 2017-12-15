@@ -1,7 +1,8 @@
 package clientset
 
 import (
-	composev1beta1 "github.com/docker/cli/kubernetes/client/clientset_generated/clientset/typed/compose/v1beta1"
+	composev1beta1 "github.com/docker/kamoulox-compose/api/client/clientset_generated/clientset/typed/compose/v1beta1"
+	composev1beta2 "github.com/docker/kamoulox-compose/api/client/clientset_generated/clientset/typed/compose/v1beta2"
 	glog "github.com/golang/glog"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
@@ -10,6 +11,7 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
+	ComposeV1beta2() composev1beta2.ComposeV1beta2Interface
 	ComposeV1beta1() composev1beta1.ComposeV1beta1Interface
 	// Deprecated: please explicitly pick a version if possible.
 	Compose() composev1beta1.ComposeV1beta1Interface
@@ -19,7 +21,16 @@ type Interface interface {
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
+	*composev1beta2.ComposeV1beta2Client
 	*composev1beta1.ComposeV1beta1Client
+}
+
+// ComposeV1beta2 retrieves the ComposeV1beta2Client
+func (c *Clientset) ComposeV1beta2() composev1beta2.ComposeV1beta2Interface {
+	if c == nil {
+		return nil
+	}
+	return c.ComposeV1beta2Client
 }
 
 // ComposeV1beta1 retrieves the ComposeV1beta1Client
@@ -55,6 +66,10 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
+	cs.ComposeV1beta2Client, err = composev1beta2.NewForConfig(&configShallowCopy)
+	if err != nil {
+		return nil, err
+	}
 	cs.ComposeV1beta1Client, err = composev1beta1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
@@ -72,6 +87,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
+	cs.ComposeV1beta2Client = composev1beta2.NewForConfigOrDie(c)
 	cs.ComposeV1beta1Client = composev1beta1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
@@ -81,6 +97,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
+	cs.ComposeV1beta2Client = composev1beta2.New(c)
 	cs.ComposeV1beta1Client = composev1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
