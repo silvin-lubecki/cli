@@ -1,10 +1,11 @@
 package compose
 
 import (
+	composetypes "github.com/docker/cli/cli/compose/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// ImpersonationConfig holds information use to impersonate calls from the compose controller
+// ImpersonationConfig contains the data required to impersonate a user.
 type ImpersonationConfig struct {
 	// UserName is the username to impersonate on each request.
 	UserName string
@@ -15,43 +16,47 @@ type ImpersonationConfig struct {
 	Extra map[string][]string
 }
 
-// Stack defines a stack object to be register in the kubernetes API
+// Stack is the internal representation of a compose stack
 // +genclient=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type Stack struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
-	Spec   StackSpec
-	Status StackStatus
+	Spec   StackSpec    `json:"spec,omitempty"`
+	Status *StackStatus `json:"status,omitempty"`
 }
 
-// StackStatus defines the observed state of Stack
+// StackStatus is the current status of a stack
 type StackStatus struct {
 	Phase   StackPhase
 	Message string
 }
 
-// StackSpec defines the desired state of Stack
+// Config contains the stack description
+type Config composetypes.Config
+
+// StackSpec is the Spec field of a Stack
 type StackSpec struct {
-	ComposeFile string
-	Owner       ImpersonationConfig
+	ComposeFile string              `json:"composeFile,omitempty"`
+	Stack       *Config             `json:"stack,omitempty"`
+	Owner       ImpersonationConfig `json:"owner,omitempty"`
 }
 
-// StackPhase defines the status phase in which the stack is.
+// StackPhase is the current status phase.
 type StackPhase string
 
 // These are valid conditions of a stack.
 const (
-	// Available means the stack is available.
+	// StackAvailable means the stack is available.
 	StackAvailable StackPhase = "Available"
-	// Progressing means the deployment is progressing.
+	// StackProgressing means the deployment is progressing.
 	StackProgressing StackPhase = "Progressing"
 	// StackFailure is added in a stack when one of its members fails to be created
 	// or deleted.
 	StackFailure StackPhase = "Failure"
 )
 
-// StackList defines a list of stacks
+// StackList is a list of stacks
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type StackList struct {
 	metav1.TypeMeta
@@ -59,59 +64,16 @@ type StackList struct {
 	Items []Stack
 }
 
-// Owner defines the owner of a stack. It is used to impersonate the controller calls
-// to kubernetes api.
+// Owner is the user who created the stack
 type Owner struct {
 	metav1.TypeMeta
 	metav1.ObjectMeta
 	Owner ImpersonationConfig
 }
 
-// OwnerList defines a list of owner.
+// OwnerList is a list of owners
 type OwnerList struct {
 	metav1.TypeMeta
 	metav1.ListMeta
 	Items []Owner
-}
-
-// FIXME(vdemeester) are those necessary ??
-
-// NewStatus is newStatus
-func (Stack) NewStatus() interface{} {
-	return StackStatus{}
-}
-
-// GetStatus returns the status
-func (pc *Stack) GetStatus() interface{} {
-	return pc.Status
-}
-
-// SetStatus sets the status
-func (pc *Stack) SetStatus(s interface{}) {
-	pc.Status = s.(StackStatus)
-}
-
-// GetSpec returns the spec
-func (pc *Stack) GetSpec() interface{} {
-	return pc.Spec
-}
-
-// SetSpec sets the spec
-func (pc *Stack) SetSpec(s interface{}) {
-	pc.Spec = s.(StackSpec)
-}
-
-// GetObjectMeta returns the ObjectMeta
-func (pc *Stack) GetObjectMeta() *metav1.ObjectMeta {
-	return &pc.ObjectMeta
-}
-
-// SetGeneration sets the Generation
-func (pc *Stack) SetGeneration(generation int64) {
-	pc.ObjectMeta.Generation = generation
-}
-
-// GetGeneration returns the Generation
-func (pc Stack) GetGeneration() int64 {
-	return pc.ObjectMeta.Generation
 }

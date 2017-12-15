@@ -58,7 +58,8 @@ func autoConvert_v1beta1_Stack_To_compose_Stack(in *Stack, out *compose.Stack, s
 	if err := Convert_v1beta1_StackSpec_To_compose_StackSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
-	if err := Convert_v1beta1_StackStatus_To_compose_StackStatus(&in.Status, &out.Status, s); err != nil {
+	out.Status = &compose.StackStatus{}
+	if err := Convert_v1beta1_StackStatus_To_compose_StackStatus(&in.Status, out.Status, s); err != nil {
 		return err
 	}
 	return nil
@@ -74,8 +75,10 @@ func autoConvert_compose_Stack_To_v1beta1_Stack(in *compose.Stack, out *Stack, s
 	if err := Convert_compose_StackSpec_To_v1beta1_StackSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
-	if err := Convert_compose_StackStatus_To_v1beta1_StackStatus(&in.Status, &out.Status, s); err != nil {
-		return err
+	if in.Status != nil {
+		if err := Convert_compose_StackStatus_To_v1beta1_StackStatus(in.Status, &out.Status, s); err != nil {
+			return err
+		}
 	}
 	return nil
 }
