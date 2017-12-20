@@ -201,7 +201,7 @@ func hideUnsupportedFeatures(cmd *cobra.Command, details versionDetails) {
 	clientVersion := details.Client().ClientVersion()
 	osType := details.ServerInfo().OSType
 	hasExperimental := details.ServerInfo().HasExperimental
-	hasKubernetes := details.ClientInfo().HasKubernetes
+	hasKubernetes := details.ClientInfo().HasKubernetes()
 
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// hide experimental flags
@@ -267,7 +267,7 @@ func areFlagsSupported(cmd *cobra.Command, details versionDetails) error {
 	clientVersion := details.Client().ClientVersion()
 	osType := details.ServerInfo().OSType
 	hasExperimental := details.ServerInfo().HasExperimental
-	hasKubernetes := details.ClientInfo().HasKubernetes
+	hasKubernetes := details.ClientInfo().HasKubernetes()
 
 	errs := []string{}
 
@@ -302,7 +302,7 @@ func areFlagsSupported(cmd *cobra.Command, details versionDetails) error {
 func areSubcommandsSupported(cmd *cobra.Command, details versionDetails) error {
 	clientVersion := details.Client().ClientVersion()
 	hasExperimental := details.ServerInfo().HasExperimental
-	hasKubernetes := details.ClientInfo().HasKubernetes
+	hasKubernetes := details.ClientInfo().HasKubernetes()
 
 	// Check recursively so that, e.g., `docker stack ls` returns the same output as `docker stack`
 	for curr := cmd; curr != nil; curr = curr.Parent() {

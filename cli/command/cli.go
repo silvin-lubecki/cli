@@ -133,8 +133,8 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	if err != nil {
 		return err
 	}
-	orchestrator := GetOrchestrator(cli.configFile.Orchestrator)
-	cli.clientInfo = ClientInfo{HasKubernetes: orchestrator == OrchestratorKubernetes}
+	orchestrator := GetOrchestrator(opts.Common.Orchestrator, cli.configFile.Orchestrator)
+	cli.clientInfo = ClientInfo{Orchestrator: orchestrator}
 	cli.initializeFromClient()
 	return nil
 }
@@ -188,7 +188,12 @@ type ServerInfo struct {
 
 // ClientInfo store details about the supported features of the client
 type ClientInfo struct {
-	HasKubernetes bool
+	Orchestrator Orchestrator
+}
+
+// HasKubernetes returns true if the specified orchestrator is kubernetes
+func (i ClientInfo) HasKubernetes() bool {
+	return i.Orchestrator == OrchestratorKubernetes
 }
 
 // NewDockerCli returns a DockerCli instance with IO output and error streams set by in, out and err.
