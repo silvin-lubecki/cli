@@ -8,12 +8,19 @@ import (
 	"strings"
 )
 
-func RunLogs(dockerCli *KubeCli, opts []string, colorized bool) error {
+func RunLogs(dockerCli *KubeCli, opts []string, colorized bool, follow bool, tail int) error {
 	rest, err := dockerCli.restClientv1beta2()
 	if err != nil {
 		return err
 	}
-	rc, err := rest.Get().Namespace(dockerCli.kubeNamespace).Name(opts[0]).Resource("stacks").SubResource("log").Stream()
+	req := rest.Get().Namespace(dockerCli.kubeNamespace).Name(opts[0]).Resource("stacks").SubResource("log")
+	if follow {
+		req = req.Param("follow", "true")
+	}
+	if tail >= 0 {
+		req = req.Param("tail", fmt.Sprintf("%v", tail))
+	}
+	rc, err := req.Stream()
 	if err != nil {
 		return err
 	}

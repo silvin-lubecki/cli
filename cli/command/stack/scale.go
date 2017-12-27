@@ -14,7 +14,7 @@ func newScaleCommand(dockerCli command.Cli) *cobra.Command {
 		Args:    cobra.MinimumNArgs(2),
 		Annotations: map[string]string {"kubernetes": ""},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dockerCli.ClientInfo().HasKubernetes {
+			if dockerCli.ClientInfo().HasKubernetes() {
 				kli, err := kubernetes.WrapCli(dockerCli, cmd)
 				if err != nil {
 					return err
