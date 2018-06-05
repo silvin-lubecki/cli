@@ -1,47 +1,38 @@
 package kubernetes
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-
-	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/formatter"
 	"github.com/docker/cli/cli/command/stack/options"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/pkg/errors"
-	core_v1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GetStacks lists the kubernetes stacks
 func GetStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
+	clientFactory := &stackClientFactoryImpl{kubeCli: *kubeCli}
+	nLister := &userVisibleNamespaceLister{dockerCli: kubeCli}
+	kubeConfig := kubeCli.ConfigFile().Kubernetes
+	return getStacks(clientFactory, nLister, opts, kubeConfig)
+}
+
+func getStacks(clientFactory stackClientFactory, nLister namespaceLister, opts options.List, kubeConfig *configfile.KubernetesConfig) ([]*formatter.Stack, []error, error) {
 	if opts.AllNamespaces || len(opts.Namespaces) == 0 {
-		if isAllNamespacesDisabled(kubeCli.ConfigFile().Kubernetes) {
+		if isAllNamespacesDisabled(kubeConfig) {
 			opts.AllNamespaces = true
 		}
-		return getStacksWithAllNamespaces(kubeCli, opts)
+		return getStacksWithAllNamespaces(clientFactory, nLister, opts)
 	}
-	return getStacksWithNamespaces(kubeCli, opts, removeDuplicates(opts.Namespaces))
+	return getStacksWithNamespaces(clientFactory, removeDuplicates(opts.Namespaces))
 }
 
 func isAllNamespacesDisabled(kubeCliConfig *configfile.KubernetesConfig) bool {
 	return kubeCliConfig == nil || kubeCliConfig != nil && kubeCliConfig.AllNamespaces != "disabled"
 }
 
-func getStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
-	composeClient, err := kubeCli.composeClient()
-	if err != nil {
-		return nil, nil, err
-	}
-	stackSvc, err := composeClient.Stacks(opts.AllNamespaces)
-	if err != nil {
-		return nil, nil, err
-	}
-	stacks, errs, err := stackSvc.List(metav1.ListOptions{})
+func convertStacks(lister stackLister) ([]*formatter.Stack, []error, error) {
+	stacks, errs, err := lister.List(metav1.ListOptions{})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,12 +48,16 @@ func getStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error
 	return formattedStacks, errs, nil
 }
 
-func getStacksWithAllNamespaces(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
-	stacks, errs, err := getStacks(kubeCli, opts)
+func getStacksWithAllNamespaces(clientFactory stackClientFactory, nLister namespaceLister, opts options.List) ([]*formatter.Stack, []error, error) {
+	lister, err := clientFactory.Stacks("", opts.AllNamespaces)
+	if err != nil {
+		return nil, nil, err
+	}
+	stacks, errs, err := convertStacks(lister)
 	if !apierrs.IsForbidden(err) {
 		return stacks, errs, err
 	}
-	namespaces, err2 := getUserVisibleNamespaces(*kubeCli)
+	namespaces, err2 := nLister.List()
 	if err2 != nil {
 		return nil, nil, errors.Wrap(err2, "failed to query user visible namespaces")
 	}
@@ -71,61 +66,19 @@ func getStacksWithAllNamespaces(kubeCli *KubeCli, opts options.List) ([]*formatt
 		return nil, nil, err
 	}
 	opts.AllNamespaces = false
-	return getStacksWithNamespaces(kubeCli, opts, namespaces)
+	return getStacksWithNamespaces(clientFactory, namespaces)
 }
 
-func getUserVisibleNamespaces(dockerCli command.Cli) ([]string, error) {
-	host := dockerCli.Client().DaemonHost()
-	endpoint, err := url.Parse(host)
-	if err != nil {
-		return nil, err
-	}
-	endpoint.Scheme = "https"
-	endpoint.Path = "/kubernetesNamespaces"
-	resp, err := dockerCli.Client().HTTPClient().Get(endpoint.String())
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.Wrapf(err, "received %d status and unable to read response", resp.StatusCode)
-	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		nms := &core_v1.NamespaceList{}
-		if err := json.Unmarshal(body, nms); err != nil {
-			return nil, errors.Wrapf(err, "unmarshal failed: %s", string(body))
-		}
-		namespaces := make([]string, len(nms.Items))
-		for i, namespace := range nms.Items {
-			namespaces[i] = namespace.Name
-		}
-		return namespaces, nil
-	case http.StatusNotFound:
-		// UCP API not present
-		return nil, nil
-	default:
-		return nil, fmt.Errorf("received %d status while retrieving namespaces: %s", resp.StatusCode, string(body))
-	}
-}
-
-func getStacksWithNamespaces(kubeCli *KubeCli, opts options.List, namespaces []string) ([]*formatter.Stack, []error, error) {
-	var (
-		stacks  []*formatter.Stack
-		allErrs []error
-	)
+func getStacksWithNamespaces(clientFactory stackClientFactory, namespaces []string) ([]*formatter.Stack, []error, error) {
+	var listers []stackLister
 	for _, namespace := range namespaces {
-		kubeCli.kubeNamespace = namespace
-		ss, errs, err := getStacks(kubeCli, opts)
+		lister, err := clientFactory.Stacks(namespace, false)
 		if err != nil {
-			allErrs = append(allErrs, err)
-		} else {
-			stacks = append(stacks, ss...)
-			allErrs = append(allErrs, errs...)
+			return nil, nil, err
 		}
+		listers = append(listers, lister)
 	}
-	return stacks, allErrs, nil
+	return convertStacks(&compositeStackLister{listers: listers})
 }
 
 func removeDuplicates(namespaces []string) []string {
