@@ -1,6 +1,7 @@
 package stack
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/docker/cli/cli"
@@ -36,12 +37,16 @@ func newListCommand(dockerCli command.Cli) *cobra.Command {
 }
 
 func runList(cmd *cobra.Command, dockerCli command.Cli, opts options.List) error {
-	stacks := []*formatter.Stack{}
+	var (
+		stacks []*formatter.Stack
+		errs   []error
+	)
 	if dockerCli.ClientInfo().HasSwarm() {
-		ss, err := swarm.GetStacks(dockerCli)
+		ss, errsSwarm, err := swarm.GetStacks(dockerCli)
 		if err != nil {
 			return err
 		}
+		errs = append(errs, errsSwarm...)
 		stacks = append(stacks, ss...)
 	}
 	if dockerCli.ClientInfo().HasKubernetes() {
@@ -49,16 +54,17 @@ func runList(cmd *cobra.Command, dockerCli command.Cli, opts options.List) error
 		if err != nil {
 			return err
 		}
-		ss, err := kubernetes.GetStacks(kubeCli, opts)
+		ss, errsKube, err := kubernetes.GetStacks(kubeCli, opts)
 		if err != nil {
 			return err
 		}
+		errs = append(errs, errsKube...)
 		stacks = append(stacks, ss...)
 	}
-	return format(dockerCli, opts, stacks)
+	return format(dockerCli, opts, stacks, errs)
 }
 
-func format(dockerCli command.Cli, opts options.List, stacks []*formatter.Stack) error {
+func format(dockerCli command.Cli, opts options.List, stacks []*formatter.Stack, errs []error) error {
 	format := opts.Format
 	if format == "" || format == formatter.TableFormatKey {
 		format = formatter.SwarmStackTableFormat
@@ -75,5 +81,11 @@ func format(dockerCli command.Cli, opts options.List, stacks []*formatter.Stack)
 			!sortorder.NaturalLess(stacks[j].Name, stacks[i].Name) &&
 				sortorder.NaturalLess(stacks[j].Namespace, stacks[i].Namespace)
 	})
-	return formatter.StackWrite(stackCtx, stacks)
+	if err := formatter.StackWrite(stackCtx, stacks); err != nil {
+		return err
+	}
+	for _, e := range errs {
+		fmt.Fprintf(dockerCli.Err(), "%s\n", e)
+	}
+	return nil
 }

@@ -18,7 +18,7 @@ import (
 )
 
 // GetStacks lists the kubernetes stacks
-func GetStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, error) {
+func GetStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
 	if opts.AllNamespaces || len(opts.Namespaces) == 0 {
 		if isAllNamespacesDisabled(kubeCli.ConfigFile().Kubernetes) {
 			opts.AllNamespaces = true
@@ -32,18 +32,18 @@ func isAllNamespacesDisabled(kubeCliConfig *configfile.KubernetesConfig) bool {
 	return kubeCliConfig == nil || kubeCliConfig != nil && kubeCliConfig.AllNamespaces != "disabled"
 }
 
-func getStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, error) {
+func getStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
 	composeClient, err := kubeCli.composeClient()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	stackSvc, err := composeClient.Stacks(opts.AllNamespaces)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	stacks, err := stackSvc.List(metav1.ListOptions{})
+	stacks, errs, err := stackSvc.List(metav1.ListOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var formattedStacks []*formatter.Stack
 	for _, stack := range stacks {
@@ -54,21 +54,21 @@ func getStacks(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, error) 
 			Namespace:    stack.namespace,
 		})
 	}
-	return formattedStacks, nil
+	return formattedStacks, errs, nil
 }
 
-func getStacksWithAllNamespaces(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, error) {
-	stacks, err := getStacks(kubeCli, opts)
+func getStacksWithAllNamespaces(kubeCli *KubeCli, opts options.List) ([]*formatter.Stack, []error, error) {
+	stacks, errs, err := getStacks(kubeCli, opts)
 	if !apierrs.IsForbidden(err) {
-		return stacks, err
+		return stacks, errs, err
 	}
 	namespaces, err2 := getUserVisibleNamespaces(*kubeCli)
 	if err2 != nil {
-		return nil, errors.Wrap(err2, "failed to query user visible namespaces")
+		return nil, nil, errors.Wrap(err2, "failed to query user visible namespaces")
 	}
 	if namespaces == nil {
 		// UCP API not present, fall back to Kubernetes error
-		return nil, err
+		return nil, nil, err
 	}
 	opts.AllNamespaces = false
 	return getStacksWithNamespaces(kubeCli, opts, namespaces)
@@ -110,17 +110,22 @@ func getUserVisibleNamespaces(dockerCli command.Cli) ([]string, error) {
 	}
 }
 
-func getStacksWithNamespaces(kubeCli *KubeCli, opts options.List, namespaces []string) ([]*formatter.Stack, error) {
-	stacks := []*formatter.Stack{}
+func getStacksWithNamespaces(kubeCli *KubeCli, opts options.List, namespaces []string) ([]*formatter.Stack, []error, error) {
+	var (
+		stacks  []*formatter.Stack
+		allErrs []error
+	)
 	for _, namespace := range namespaces {
 		kubeCli.kubeNamespace = namespace
-		ss, err := getStacks(kubeCli, opts)
+		ss, errs, err := getStacks(kubeCli, opts)
 		if err != nil {
-			return nil, err
+			allErrs = append(allErrs, err)
+		} else {
+			stacks = append(stacks, ss...)
+			allErrs = append(allErrs, errs...)
 		}
-		stacks = append(stacks, ss...)
 	}
-	return stacks, nil
+	return stacks, allErrs, nil
 }
 
 func removeDuplicates(namespaces []string) []string {

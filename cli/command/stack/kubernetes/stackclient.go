@@ -23,7 +23,7 @@ type StackClient interface {
 	CreateOrUpdate(s stack) error
 	Delete(name string) error
 	Get(name string) (stack, error)
-	List(opts metav1.ListOptions) ([]stack, error)
+	List(opts metav1.ListOptions) ([]stack, []error, error)
 	IsColliding(servicesClient corev1.ServiceInterface, s stack) error
 	FromCompose(stderr io.Writer, name string, cfg *composetypes.Config) (stack, error)
 }
@@ -65,20 +65,24 @@ func (s *stackV1Beta1) Get(name string) (stack, error) {
 	return stackFromV1beta1(stackBeta1)
 }
 
-func (s *stackV1Beta1) List(opts metav1.ListOptions) ([]stack, error) {
+func (s *stackV1Beta1) List(opts metav1.ListOptions) ([]stack, []error, error) {
 	list, err := s.stacks.List(opts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	stacks := make([]stack, len(list.Items))
+	var (
+		stacks []stack
+		errs   []error
+	)
 	for i := range list.Items {
 		stack, err := stackFromV1beta1(&list.Items[i])
 		if err != nil {
-			return nil, err
+			errs = append(errs, err)
+		} else {
+			stacks = append(stacks, stack)
 		}
-		stacks[i] = stack
 	}
-	return stacks, nil
+	return stacks, errs, nil
 }
 
 // IsColliding verifies that services defined in the stack collides with already deployed services
@@ -168,16 +172,16 @@ func (s *stackV1Beta2) Get(name string) (stack, error) {
 	return stackFromV1beta2(stackBeta2), nil
 }
 
-func (s *stackV1Beta2) List(opts metav1.ListOptions) ([]stack, error) {
+func (s *stackV1Beta2) List(opts metav1.ListOptions) ([]stack, []error, error) {
 	list, err := s.stacks.List(opts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	stacks := make([]stack, len(list.Items))
 	for i := range list.Items {
 		stacks[i] = stackFromV1beta2(&list.Items[i])
 	}
-	return stacks, nil
+	return stacks, nil, nil
 }
 
 // IsColliding is handle server side with the compose api v1beta2, so nothing to do here

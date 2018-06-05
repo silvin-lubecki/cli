@@ -11,20 +11,21 @@ import (
 )
 
 // GetStacks lists the swarm stacks.
-func GetStacks(dockerCli command.Cli) ([]*formatter.Stack, error) {
+func GetStacks(dockerCli command.Cli) ([]*formatter.Stack, []error, error) {
 	services, err := dockerCli.Client().ServiceList(
 		context.Background(),
 		types.ServiceListOptions{Filters: getAllStacksFilter()})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	m := make(map[string]*formatter.Stack)
+	var errs []error
 	for _, service := range services {
 		labels := service.Spec.Labels
 		name, ok := labels[convert.LabelNamespace]
 		if !ok {
-			return nil, errors.Errorf("cannot get label %s for service %s",
-				convert.LabelNamespace, service.ID)
+			errs = append(errs, errors.Errorf("cannot get label %s for service %s", convert.LabelNamespace, service.ID))
+			continue
 		}
 		ztack, ok := m[name]
 		if !ok {
@@ -41,5 +42,5 @@ func GetStacks(dockerCli command.Cli) ([]*formatter.Stack, error) {
 	for _, stack := range m {
 		stacks = append(stacks, stack)
 	}
-	return stacks, nil
+	return stacks, errs, nil
 }

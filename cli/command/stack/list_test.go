@@ -145,3 +145,25 @@ func TestListOrder(t *testing.T) {
 		golden.Assert(t, cli.OutBuffer().String(), uc.golden)
 	}
 }
+
+func TestListStacksEvenWithError(t *testing.T) {
+	cli := test.NewFakeCli(&fakeClient{
+		serviceListFunc: func(options types.ServiceListOptions) ([]swarm.Service, error) {
+			return []swarm.Service{
+				*Service(
+					ServiceLabels(map[string]string{
+						"com.docker.stack.namespace": "service-name-bar",
+					}),
+				),
+				*Service(
+					ServiceLabels(map[string]string{
+						"unknown.label": "print-error",
+					}),
+				)}, nil
+		},
+	}, test.OrchestratorSwarm)
+	cmd := newListCommand(cli)
+	assert.NilError(t, cmd.Execute())
+	golden.Assert(t, cli.OutBuffer().String(), "stack-list-with-error.out.golden")
+	golden.Assert(t, cli.ErrBuffer().String(), "stack-list-with-error.error.golden")
+}
