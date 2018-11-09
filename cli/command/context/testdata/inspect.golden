@@ -1,0 +1,27 @@
+[
+    {
+        "name": "current",
+        "metadata": {
+            "description": "description of current",
+            "stack_orchestrator": "all"
+        },
+        "endpoints": {
+            "docker": {
+                "host": "https://someswarmserver",
+                "skip_tls_verify": false
+            },
+            "kubernetes": {
+                "host": "https://someserver",
+                "skip_tls_verify": false,
+                "default_namespace": "default"
+            }
+        },
+        "tls-material": {
+            "kubernetes": [
+                "ca.pem",
+                "cert.pem",
+                "key.pem"
+            ]
+        }
+    }
+]
