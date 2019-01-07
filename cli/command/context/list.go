@@ -60,7 +60,7 @@ func runList(dockerCli command.Cli, opts *listOptions) error {
 			Name:               rawMeta.Name,
 			Current:            rawMeta.Name == curContext,
 			Description:        meta.Description,
-			StackOrchestrator:  hideUnset(meta.StackOrchestrator),
+			StackOrchestrator:  string(meta.StackOrchestrator),
 			DockerEndpoint:     dockerEndpoint.Host,
 			KubernetesEndpoint: kubEndpointText,
 		}
@@ -81,7 +81,7 @@ func runList(dockerCli command.Cli, opts *listOptions) error {
 		desc := &formatter.ClientContext{
 			Current:            true,
 			Description:        "Current DOCKER_HOST based configuration",
-			StackOrchestrator:  hideUnset(orchestrator),
+			StackOrchestrator:  string(orchestrator),
 			DockerEndpoint:     dockerCli.DockerEndpoint().Host,
 			KubernetesEndpoint: kubEndpointText,
 		}
@@ -96,12 +96,4 @@ func format(dockerCli command.Cli, opts *listOptions, contexts []*formatter.Clie
 		Format: formatter.NewClientContextFormat(opts.format, opts.quiet),
 	}
 	return formatter.ClientContextWrite(contextCtx, contexts)
-}
-
-func hideUnset(src command.Orchestrator) string {
-	res := string(src)
-	if res == "unset" {
-		return ""
-	}
-	return res
 }
