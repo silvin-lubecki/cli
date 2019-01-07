@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -181,7 +182,7 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	cli.configFile = cliconfig.LoadDefaultConfigFile(cli.err)
 	var err error
 	cli.contextStore = store.New(cliconfig.ContextStoreDir(), storeConfig)
-	cli.currentContext, err = resolveContextName(opts.Common, cli.configFile)
+	cli.currentContext, err = resolveContextName(opts.Common, cli.configFile, cli.contextStore, cli.err)
 	if err != nil {
 		return err
 	}
@@ -223,7 +224,7 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 // NewAPIClientFromFlags creates a new APIClient from command line flags
 func NewAPIClientFromFlags(opts *cliflags.CommonOptions, configFile *configfile.ConfigFile) (client.APIClient, error) {
 	store := store.New(cliconfig.ContextStoreDir(), storeConfig)
-	contextName, err := resolveContextName(opts, configFile)
+	contextName, err := resolveContextName(opts, configFile, store, os.Stderr)
 	if err != nil {
 		return nil, err
 	}
@@ -371,6 +372,10 @@ func (cli *DockerCli) StackOrchestrator(flagValue string) (Orchestrator, error) 
 			contextstore = store.New(cliconfig.ContextStoreDir(), storeConfig)
 		}
 		ctxRaw, err := contextstore.GetContextMetadata(currentContext)
+		if store.IsErrContextDoesNotExist(err) {
+			// case where the currentContext has been removed (CLI behavior is to fallback to using DOCKER_HOST based resolution)
+			return GetStackOrchestrator(flagValue, "", configFile.StackOrchestrator, cli.Err())
+		}
 		if err != nil {
 			return "", err
 		}
@@ -382,6 +387,10 @@ func (cli *DockerCli) StackOrchestrator(flagValue string) (Orchestrator, error) 
 	}
 
 	return GetStackOrchestrator(flagValue, ctxOrchestrator, configFile.StackOrchestrator, cli.Err())
+}
+
+func warnCurrentContextNotFound(name string, stderr io.Writer) {
+	fmt.Fprintf(stderr, "WARNING: current context %q is not found on filesystem. Falling back to default Docker endpoint\n", name)
 }
 
 // DockerEndpoint returns the current docker endpoint
@@ -435,7 +444,7 @@ func UserAgent() string {
 // - if DOCKER_CONTEXT is set, use this value
 // - if Config file has a globally set "CurrentContext", use this value
 // - fallbacks to default HOST, uses TLS config from flags/env vars
-func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigFile) (string, error) {
+func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigFile, contextstore store.Store, stderr io.Writer) (string, error) {
 	if opts.Context != "" && len(opts.Hosts) > 0 {
 		return "", errors.New("Conflicting options: either specify --host or --context, not bot")
 	}
@@ -452,7 +461,12 @@ func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigF
 		return ctxName, nil
 	}
 	if config != nil && config.CurrentContext != "" {
-		return config.CurrentContext, nil
+		_, err := contextstore.GetContextMetadata(config.CurrentContext)
+		if store.IsErrContextDoesNotExist(err) {
+			warnCurrentContextNotFound(config.CurrentContext, stderr)
+			return "", nil
+		}
+		return config.CurrentContext, err
 	}
 	return "", nil
 }
