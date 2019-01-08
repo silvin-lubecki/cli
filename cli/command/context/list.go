@@ -79,7 +79,7 @@ func runList(dockerCli command.Cli, opts *listOptions) error {
 		}
 		// prepend a "virtual context"
 		desc := &formatter.ClientContext{
-			Name:               "<DOCKER_HOST>",
+			Name:               "default",
 			Current:            true,
 			Description:        "Current DOCKER_HOST based configuration",
 			StackOrchestrator:  string(orchestrator),

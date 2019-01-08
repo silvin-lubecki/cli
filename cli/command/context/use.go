@@ -21,11 +21,12 @@ func newUseCommand(dockerCli command.Cli) *cobra.Command {
 			if _, err := dockerCli.ContextStore().GetContextMetadata(name); err != nil && name != "default" {
 				return err
 			}
-			if name == "default" {
-				name = ""
+			configValue := name
+			if configValue == "default" {
+				configValue = ""
 			}
 			dockerConfig := dockerCli.ConfigFile()
-			dockerConfig.CurrentContext = name
+			dockerConfig.CurrentContext = configValue
 			if err := dockerConfig.Save(); err != nil {
 				return err
 			}
