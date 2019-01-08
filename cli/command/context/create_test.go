@@ -1,7 +1,6 @@
 package context
 
 import (
-	"io"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -39,20 +38,6 @@ func makeFakeCli(t *testing.T, opts ...func(*test.FakeCli)) (*test.FakeCli, func
 func withCliConfig(configFile *configfile.ConfigFile) func(*test.FakeCli) {
 	return func(m *test.FakeCli) {
 		m.SetConfigFile(configFile)
-	}
-}
-
-func withPipeInOut(close <-chan struct{}) func(*test.FakeCli) {
-	return func(m *test.FakeCli) {
-		pipeReader, pipeWriter := io.Pipe()
-		inStream := command.NewInStream(pipeReader)
-		outStream := command.NewOutStream(pipeWriter)
-		m.SetIn(inStream)
-		m.SetOut(outStream)
-		go func() {
-			<-close
-			pipeWriter.Close()
-		}()
 	}
 }
 

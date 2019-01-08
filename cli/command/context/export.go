@@ -49,6 +49,7 @@ func newExportCommand(dockerCli command.Cli) *cobra.Command {
 
 func writeTo(dockerCli command.Cli, reader io.Reader, dest string) error {
 	var writer io.Writer
+	var printDest bool
 	if dest == "-" {
 		writer = dockerCli.Out()
 	} else {
@@ -58,9 +59,15 @@ func writeTo(dockerCli command.Cli, reader io.Reader, dest string) error {
 		}
 		defer f.Close()
 		writer = f
+		printDest = true
 	}
-	_, err := io.Copy(writer, reader)
-	return err
+	if _, err := io.Copy(writer, reader); err != nil {
+		return err
+	}
+	if printDest {
+		fmt.Fprintf(dockerCli.Err(), "Written file %q\n", dest)
+	}
+	return nil
 }
 
 func runExport(dockerCli command.Cli, opts *exportOptions) error {

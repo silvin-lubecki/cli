@@ -1,6 +1,9 @@
 package context
 
 import (
+	"bytes"
+	"fmt"
+	"github.com/docker/cli/cli/command"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -17,10 +20,12 @@ func TestExportImportWithFile(t *testing.T) {
 	cli, cleanup := makeFakeCli(t)
 	defer cleanup()
 	createTestContextWithKube(t, cli)
+	cli.ErrBuffer().Reset()
 	assert.NilError(t, runExport(cli, &exportOptions{
 		contextName: "test",
 		dest:        contextFile,
 	}))
+	assert.Equal(t, cli.ErrBuffer().String(), fmt.Sprintf("Written file %q\n", contextFile))
 	assert.NilError(t, runImport(cli, "test2", contextFile))
 	context1, err := cli.ContextStore().GetContextMetadata("test")
 	assert.NilError(t, err)
@@ -33,18 +38,17 @@ func TestExportImportWithFile(t *testing.T) {
 }
 
 func TestExportImportPipe(t *testing.T) {
-	closeChan := make(chan struct{})
 	cli, cleanup := makeFakeCli(t)
 	defer cleanup()
 	createTestContextWithKube(t, cli)
-	withPipeInOut(closeChan)(cli)
-	go func() {
-		defer close(closeChan)
-		assert.NilError(t, runExport(cli, &exportOptions{
-			contextName: "test",
-			dest:        "-",
-		}))
-	}()
+	cli.ErrBuffer().Reset()
+	cli.OutBuffer().Reset()
+	assert.NilError(t, runExport(cli, &exportOptions{
+		contextName: "test",
+		dest:        "-",
+	}))
+	assert.Equal(t, cli.ErrBuffer().String(), "")
+	cli.SetIn(command.NewInStream(ioutil.NopCloser(bytes.NewBuffer(cli.OutBuffer().Bytes()))))
 	assert.NilError(t, runImport(cli, "test2", "-"))
 	context1, err := cli.ContextStore().GetContextMetadata("test")
 	assert.NilError(t, err)
@@ -64,12 +68,13 @@ func TestExportKubeconfig(t *testing.T) {
 	cli, cleanup := makeFakeCli(t)
 	defer cleanup()
 	createTestContextWithKube(t, cli)
+	cli.ErrBuffer().Reset()
 	assert.NilError(t, runExport(cli, &exportOptions{
 		contextName: "test",
 		dest:        contextFile,
 		kubeconfig:  true,
 	}))
-
+	assert.Equal(t, cli.ErrBuffer().String(), fmt.Sprintf("Written file %q\n", contextFile))
 	assert.NilError(t, runCreate(cli, &createOptions{
 		name: "test2",
 		kubernetes: map[string]string{
