@@ -94,3 +94,20 @@ func TestExportKubeconfig(t *testing.T) {
 	}))
 	validateTestKubeEndpoint(t, cli.ContextStore(), "test2")
 }
+
+func TestExportExistingFile(t *testing.T) {
+	contextDir, err := ioutil.TempDir("", t.Name()+"context")
+	assert.NilError(t, err)
+	defer os.RemoveAll(contextDir)
+	contextFile := filepath.Join(contextDir, "exported")
+	cli, cleanup := makeFakeCli(t)
+	defer cleanup()
+	createTestContextWithKube(t, cli)
+	cli.ErrBuffer().Reset()
+	assert.NilError(t, ioutil.WriteFile(contextFile, []byte{}, 0644))
+	assert.ErrorContains(t, runExport(cli, &exportOptions{
+		contextName: "test",
+		dest:        contextFile,
+	}), "exists")
+
+}
