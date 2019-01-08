@@ -19,6 +19,8 @@ func TestUpdateDescriptionOnly(t *testing.T) {
 		docker:                   map[string]string{},
 	})
 	assert.NilError(t, err)
+	cli.OutBuffer().Reset()
+	cli.ErrBuffer().Reset()
 	assert.NilError(t, runUpdate(cli, &updateOptions{
 		name:        "test",
 		description: "description",
@@ -29,6 +31,9 @@ func TestUpdateDescriptionOnly(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, dc.StackOrchestrator, command.OrchestratorSwarm)
 	assert.Equal(t, dc.Description, "description")
+
+	assert.Equal(t, "test\n", cli.OutBuffer().String())
+	assert.Equal(t, "Context \"test\" has been updated\n", cli.ErrBuffer().String())
 }
 
 func TestUpdateDockerOnly(t *testing.T) {

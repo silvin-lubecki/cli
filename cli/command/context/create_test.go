@@ -95,6 +95,8 @@ func TestCreateOrchestratorSwarm(t *testing.T) {
 		docker:                   map[string]string{},
 	})
 	assert.NilError(t, err)
+	assert.Equal(t, "test\n", cli.OutBuffer().String())
+	assert.Equal(t, "Context \"test\" has been created\n", cli.ErrBuffer().String())
 }
 
 func TestCreateOrchestratorEmpty(t *testing.T) {

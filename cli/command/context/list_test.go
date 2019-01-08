@@ -31,6 +31,7 @@ func TestList(t *testing.T) {
 	createTestContextWithKubeAndSwarm(t, cli, "current", "all")
 	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
 	cli.SetCurrentContext("current")
+	cli.OutBuffer().Reset()
 	assert.NilError(t, runList(cli, &listOptions{
 		format: formatter.TableFormatKey,
 	}))
@@ -43,6 +44,7 @@ func TestListUnset(t *testing.T) {
 	createTestContextWithKubeAndSwarm(t, cli, "current", "unset")
 	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
 	cli.SetCurrentContext("current")
+	cli.OutBuffer().Reset()
 	assert.NilError(t, runList(cli, &listOptions{
 		format: formatter.TableFormatKey,
 	}))
@@ -58,7 +60,7 @@ func TestListNoContext(t *testing.T) {
 			Host: "https://someswarmserver",
 		},
 	})
-
+	cli.OutBuffer().Reset()
 	assert.NilError(t, runList(cli, &listOptions{
 		format: formatter.TableFormatKey,
 	}))
@@ -71,6 +73,7 @@ func TestListQuiet(t *testing.T) {
 	createTestContextWithKubeAndSwarm(t, cli, "current", "all")
 	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
 	cli.SetCurrentContext("current")
+	cli.OutBuffer().Reset()
 	assert.NilError(t, runList(cli, &listOptions{
 		format: formatter.TableFormatKey,
 		quiet:  true,
@@ -82,6 +85,7 @@ func TestInspect(t *testing.T) {
 	cli, cleanup := makeFakeCli(t)
 	defer cleanup()
 	createTestContextWithKubeAndSwarm(t, cli, "current", "all")
+	cli.OutBuffer().Reset()
 	assert.NilError(t, runInspect(cli, inspectOptions{
 		refs: []string{"current"},
 	}))

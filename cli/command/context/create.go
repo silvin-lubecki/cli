@@ -120,6 +120,8 @@ func runCreate(cli command.Cli, o *createOptions) error {
 	if err := s.ResetContextTLSMaterial(o.name, &contextTLSData); err != nil {
 		return err
 	}
+	fmt.Fprintln(cli.Out(), o.name)
+	fmt.Fprintf(cli.Err(), "Context %q has been created\n", o.name)
 	return nil
 }
 

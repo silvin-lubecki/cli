@@ -34,9 +34,10 @@ func TestExportImportWithFile(t *testing.T) {
 
 func TestExportImportPipe(t *testing.T) {
 	closeChan := make(chan struct{})
-	cli, cleanup := makeFakeCli(t, withPipeInOut(closeChan))
+	cli, cleanup := makeFakeCli(t)
 	defer cleanup()
 	createTestContextWithKube(t, cli)
+	withPipeInOut(closeChan)(cli)
 	go func() {
 		defer close(closeChan)
 		assert.NilError(t, runExport(cli, &exportOptions{
