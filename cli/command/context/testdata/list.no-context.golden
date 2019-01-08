@@ -1,2 +1,2 @@
 NAME                DESCRIPTION                               DOCKER ENDPOINT           KUBERNETES ENDPOINT            ORCHESTRATOR
- *                  Current DOCKER_HOST based configuration   https://someswarmserver   https://someserver (default)   swarm
+<DOCKER_HOST> *     Current DOCKER_HOST based configuration   https://someswarmserver   https://someserver (default)   swarm
