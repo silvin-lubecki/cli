@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"github.com/docker/docker/client"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -135,13 +136,22 @@ func getDockerEndpoint(dockerCli command.Cli, config map[string]string) (docker.
 	if err != nil {
 		return docker.Endpoint{}, err
 	}
-	return docker.Endpoint{
+	ep := docker.Endpoint{
 		EndpointMeta: docker.EndpointMeta{
 			Host:          config[keyHost],
 			SkipTLSVerify: skipTLSVerify,
 		},
 		TLSData: tlsData,
-	}, nil
+	}
+	// try to resolve a docker client, validating the configuration
+	opts, err := ep.ClientOpts()
+	if err != nil {
+		return docker.Endpoint{}, errors.Wrap(err, "invalid docker endpoint options")
+	}
+	if _, err := client.NewClientWithOpts(opts...); err != nil {
+		return docker.Endpoint{}, errors.Wrap(err, "unable to apply docker endpoint options")
+	}
+	return ep, nil
 }
 
 func getDockerEndpointMetadataAndTLS(dockerCli command.Cli, config map[string]string) (docker.EndpointMeta, *store.EndpointTLSData, error) {

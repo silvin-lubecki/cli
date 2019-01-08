@@ -78,3 +78,20 @@ func TestUpdateStackOrchestratorStrategyRemoveKubeEndpoint(t *testing.T) {
 	})
 	assert.ErrorContains(t, err, `cannot specify orchestrator "kubernetes" without configuring a Kubernetes endpoint`)
 }
+
+func TestUpdateInvalidDockerHost(t *testing.T) {
+	cli, cleanup := makeFakeCli(t)
+	defer cleanup()
+	err := runCreate(cli, &createOptions{
+		name:   "test",
+		docker: map[string]string{},
+	})
+	assert.NilError(t, err)
+	err = runUpdate(cli, &updateOptions{
+		name: "test",
+		docker: map[string]string{
+			keyHost: "some///invalid/host",
+		},
+	})
+	assert.ErrorContains(t, err, "unable to parse docker host")
+}

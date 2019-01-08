@@ -165,3 +165,15 @@ func TestCreateOrchestratorAllKubernetesEndpointFromCurrent(t *testing.T) {
 	createTestContextWithKube(t, cli)
 	validateTestKubeEndpoint(t, cli.ContextStore(), "test")
 }
+
+func TestCreateInvalidDockerHost(t *testing.T) {
+	cli, cleanup := makeFakeCli(t)
+	defer cleanup()
+	err := runCreate(cli, &createOptions{
+		name: "test",
+		docker: map[string]string{
+			keyHost: "some///invalid/host",
+		},
+	})
+	assert.ErrorContains(t, err, "unable to parse docker host")
+}
