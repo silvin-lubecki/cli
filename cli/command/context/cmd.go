@@ -39,6 +39,9 @@ func validateContextName(name string) error {
 	if name == "" {
 		return errors.New("context name cannot be empty")
 	}
+	if name == "default" {
+		return errors.New(`"default" is a reserved context name`)
+	}
 	if !restrictedNameRegEx.MatchString(name) {
 		return fmt.Errorf("context name %q is invalid, names are validated against regexp %q", name, restrictedNamePattern)
 	}

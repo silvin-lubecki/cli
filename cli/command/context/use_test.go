@@ -24,11 +24,17 @@ func TestUse(t *testing.T) {
 		name:   "test",
 		docker: map[string]string{},
 	})
-	assert.NilError(t, newUseCommand(cli).RunE(nil, []string{"test"}))
 	assert.NilError(t, err)
+	assert.NilError(t, newUseCommand(cli).RunE(nil, []string{"test"}))
 	reloadedConfig, err := config.Load(configDir)
 	assert.NilError(t, err)
 	assert.Equal(t, "test", reloadedConfig.CurrentContext)
+
+	// switch back to default
+	assert.NilError(t, newUseCommand(cli).RunE(nil, []string{"default"}))
+	reloadedConfig, err = config.Load(configDir)
+	assert.NilError(t, err)
+	assert.Equal(t, "", reloadedConfig.CurrentContext)
 }
 
 func TestUseNoExist(t *testing.T) {

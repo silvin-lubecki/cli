@@ -14,11 +14,15 @@ func newUseCommand(dockerCli command.Cli) *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
-			if err := validateContextName(name); err != nil {
+
+			if err := validateContextName(name); err != nil && name != "default" {
 				return err
 			}
-			if _, err := dockerCli.ContextStore().GetContextMetadata(name); err != nil {
+			if _, err := dockerCli.ContextStore().GetContextMetadata(name); err != nil && name != "default" {
 				return err
+			}
+			if name == "default" {
+				name = ""
 			}
 			dockerConfig := dockerCli.ConfigFile()
 			dockerConfig.CurrentContext = name

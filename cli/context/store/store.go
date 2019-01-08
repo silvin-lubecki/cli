@@ -37,8 +37,8 @@ type ContextMetadata struct {
 
 // ContextStorageInfo contains data about where a given context is stored
 type ContextStorageInfo struct {
-	MetadataDir string `json:"metadata_dir,omitempty"`
-	TLSDir      string `json:"tls_dir,omitempty"`
+	MetadataPath string `json:"metadata_path,omitempty"`
+	TLSPath      string `json:"tls_path,omitempty"`
 }
 
 // EndpointTLSData represents tls data for a given endpoint
@@ -142,8 +142,8 @@ func (s *store) GetContextTLSData(contextName, endpointName, fileName string) ([
 func (s *store) GetContextStorageInfo(contextName string) ContextStorageInfo {
 	dir := contextdirOf(contextName)
 	return ContextStorageInfo{
-		MetadataDir: s.meta.contextDir(dir),
-		TLSDir:      s.tls.contextDir(dir),
+		MetadataPath: s.meta.contextDir(dir),
+		TLSPath:      s.tls.contextDir(dir),
 	}
 }
 
