@@ -2,6 +2,7 @@ package context
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -51,6 +52,9 @@ func writeTo(dockerCli command.Cli, reader io.Reader, dest string) error {
 	var writer io.Writer
 	var printDest bool
 	if dest == "-" {
+		if dockerCli.Out().IsTerminal() {
+			return errors.New("cowardly refusing to to export to a terminal, please specify a file path")
+		}
 		writer = dockerCli.Out()
 	} else {
 		f, err := os.OpenFile(dest, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
