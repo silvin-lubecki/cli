@@ -22,6 +22,10 @@
                 "cert.pem",
                 "key.pem"
             ]
+        },
+        "storage": {
+            "metadata_path": "<METADATA_PATH>",
+            "tls_path": "<TLS_PATH>"
         }
     }
 ]
