@@ -26,6 +26,8 @@ func TestExportImportWithFile(t *testing.T) {
 		dest:        contextFile,
 	}))
 	assert.Equal(t, cli.ErrBuffer().String(), fmt.Sprintf("Written file %q\n", contextFile))
+	cli.OutBuffer().Reset()
+	cli.ErrBuffer().Reset()
 	assert.NilError(t, runImport(cli, "test2", contextFile))
 	context1, err := cli.ContextStore().GetContextMetadata("test")
 	assert.NilError(t, err)
@@ -35,6 +37,9 @@ func TestExportImportWithFile(t *testing.T) {
 	assert.DeepEqual(t, context1.Metadata, context2.Metadata)
 	assert.Equal(t, "test", context1.Name)
 	assert.Equal(t, "test2", context2.Name)
+
+	assert.Equal(t, "test2\n", cli.OutBuffer().String())
+	assert.Equal(t, "Context \"test2\" has been imported\n", cli.ErrBuffer().String())
 }
 
 func TestExportImportPipe(t *testing.T) {
@@ -49,6 +54,8 @@ func TestExportImportPipe(t *testing.T) {
 	}))
 	assert.Equal(t, cli.ErrBuffer().String(), "")
 	cli.SetIn(command.NewInStream(ioutil.NopCloser(bytes.NewBuffer(cli.OutBuffer().Bytes()))))
+	cli.OutBuffer().Reset()
+	cli.ErrBuffer().Reset()
 	assert.NilError(t, runImport(cli, "test2", "-"))
 	context1, err := cli.ContextStore().GetContextMetadata("test")
 	assert.NilError(t, err)
@@ -58,6 +65,9 @@ func TestExportImportPipe(t *testing.T) {
 	assert.DeepEqual(t, context1.Metadata, context2.Metadata)
 	assert.Equal(t, "test", context1.Name)
 	assert.Equal(t, "test2", context2.Name)
+
+	assert.Equal(t, "test2\n", cli.OutBuffer().String())
+	assert.Equal(t, "Context \"test2\" has been imported\n", cli.ErrBuffer().String())
 }
 
 func TestExportKubeconfig(t *testing.T) {

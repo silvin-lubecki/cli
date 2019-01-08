@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -41,5 +42,7 @@ func runImport(dockerCli command.Cli, name string, source string) error {
 	if err := store.Import(name, dockerCli.ContextStore(), reader); err != nil {
 		return err
 	}
+	fmt.Fprintln(dockerCli.Out(), name)
+	fmt.Fprintf(dockerCli.Err(), "Context %q has been imported\n", name)
 	return nil
 }
