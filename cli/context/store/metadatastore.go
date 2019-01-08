@@ -22,12 +22,12 @@ type metadataStore struct {
 	config Config
 }
 
-func (s *metadataStore) contextDir(id identifier) string {
+func (s *metadataStore) contextDir(id contextdir) string {
 	return filepath.Join(s.root, string(id))
 }
 
 func (s *metadataStore) createOrUpdate(meta ContextMetadata) error {
-	contextDir := s.contextDir(idOf(meta.Name))
+	contextDir := s.contextDir(contextdirOf(meta.Name))
 	if err := os.MkdirAll(contextDir, 0755); err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func parseTypedOrMap(payload []byte, getter TypeGetter) (interface{}, error) {
 	return reflect.ValueOf(typed).Elem().Interface(), nil
 }
 
-func (s *metadataStore) get(id identifier) (ContextMetadata, error) {
+func (s *metadataStore) get(id contextdir) (ContextMetadata, error) {
 	contextDir := s.contextDir(id)
 	bytes, err := ioutil.ReadFile(filepath.Join(contextDir, metaFile))
 	if err != nil {
@@ -81,7 +81,7 @@ func (s *metadataStore) get(id identifier) (ContextMetadata, error) {
 	return r, err
 }
 
-func (s *metadataStore) remove(id identifier) error {
+func (s *metadataStore) remove(id contextdir) error {
 	contextDir := s.contextDir(id)
 	return os.RemoveAll(contextDir)
 }
@@ -96,7 +96,7 @@ func (s *metadataStore) list() ([]ContextMetadata, error) {
 	}
 	var res []ContextMetadata
 	for _, dir := range ctxDirs {
-		c, err := s.get(identifier(dir))
+		c, err := s.get(contextdir(dir))
 		if err != nil {
 			return nil, err
 		}

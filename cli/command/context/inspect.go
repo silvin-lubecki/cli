@@ -51,6 +51,7 @@ func runInspect(dockerCli command.Cli, opts inspectOptions) error {
 		return contextWithTLSListing{
 			ContextMetadata: c,
 			TLSMaterial:     tlsListing,
+			Storage:         dockerCli.ContextStore().GetContextStorageInfo(ref),
 		}, nil, nil
 	}
 	return inspect.Inspect(dockerCli.Out(), opts.refs, opts.format, getRefFunc)
@@ -59,4 +60,5 @@ func runInspect(dockerCli command.Cli, opts inspectOptions) error {
 type contextWithTLSListing struct {
 	store.ContextMetadata
 	TLSMaterial map[string]store.EndpointFiles `json:"tls-material,omitempty"`
+	Storage     store.ContextStorageInfo       `json:"storage,omitempty"`
 }

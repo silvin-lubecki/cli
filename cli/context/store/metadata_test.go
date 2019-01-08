@@ -47,7 +47,7 @@ func TestMetadataCreateGetRemove(t *testing.T) {
 	assert.NilError(t, err)
 	// create a new instance to check it does not depend on some sort of state
 	testee = metadataStore{root: testDir, config: testCfg}
-	meta, err := testee.get(idOf("test-context"))
+	meta, err := testee.get(contextdirOf("test-context"))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, meta, testMeta)
 
@@ -55,13 +55,13 @@ func TestMetadataCreateGetRemove(t *testing.T) {
 
 	err = testee.createOrUpdate(expected2)
 	assert.NilError(t, err)
-	meta, err = testee.get(idOf("test-context"))
+	meta, err = testee.get(contextdirOf("test-context"))
 	assert.NilError(t, err)
 	assert.DeepEqual(t, meta, expected2)
 
-	assert.NilError(t, testee.remove(idOf("test-context")))
-	assert.NilError(t, testee.remove(idOf("test-context"))) // support duplicate remove
-	_, err = testee.get(idOf("test-context"))
+	assert.NilError(t, testee.remove(contextdirOf("test-context")))
+	assert.NilError(t, testee.remove(contextdirOf("test-context"))) // support duplicate remove
+	_, err = testee.get(contextdirOf("test-context"))
 	assert.Assert(t, IsErrContextDoesNotExist(err))
 }
 
@@ -71,7 +71,7 @@ func TestMetadataRespectJsonAnnotation(t *testing.T) {
 	defer os.RemoveAll(testDir)
 	testee := metadataStore{root: testDir, config: testCfg}
 	assert.NilError(t, testee.createOrUpdate(testMetadata("test")))
-	bytes, err := ioutil.ReadFile(filepath.Join(testDir, string(idOf("test")), "meta.json"))
+	bytes, err := ioutil.ReadFile(filepath.Join(testDir, string(contextdirOf("test")), "meta.json"))
 	assert.NilError(t, err)
 	assert.Assert(t, cmp.Contains(string(bytes), "a_very_recognizable_field_name"))
 	assert.Assert(t, cmp.Contains(string(bytes), "another_very_recognizable_field_name"))
@@ -137,7 +137,7 @@ func TestWithEmbedding(t *testing.T) {
 		},
 	}
 	assert.NilError(t, testee.createOrUpdate(ContextMetadata{Metadata: testCtxMeta, Name: "test"}))
-	res, err := testee.get(idOf("test"))
+	res, err := testee.get(contextdirOf("test"))
 	assert.NilError(t, err)
 	assert.Equal(t, testCtxMeta, res.Metadata)
 }

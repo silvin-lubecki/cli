@@ -25,6 +25,7 @@ type Store interface {
 	ResetContextEndpointTLSMaterial(contextName string, endpointName string, data *EndpointTLSData) error
 	ListContextTLSFiles(name string) (map[string]EndpointFiles, error)
 	GetContextTLSData(contextName, endpointName, fileName string) ([]byte, error)
+	GetContextStorageInfo(contextName string) ContextStorageInfo
 }
 
 // ContextMetadata contains metadata about a context and its endpoints
@@ -32,6 +33,12 @@ type ContextMetadata struct {
 	Name      string                 `json:"name,omitempty"`
 	Metadata  interface{}            `json:"metadata,omitempty"`
 	Endpoints map[string]interface{} `json:"endpoints,omitempty"`
+}
+
+// ContextStorageInfo contains data about where a given context is stored
+type ContextStorageInfo struct {
+	MetadataDir string `json:"metadata_dir,omitempty"`
+	TLSDir      string `json:"tls_dir,omitempty"`
 }
 
 // EndpointTLSData represents tls data for a given endpoint
@@ -75,7 +82,7 @@ func (s *store) CreateOrUpdateContext(meta ContextMetadata) error {
 }
 
 func (s *store) RemoveContext(name string) error {
-	id := idOf(name)
+	id := contextdirOf(name)
 	if err := s.meta.remove(id); err != nil {
 		return patchErrContextName(err, name)
 	}
@@ -83,13 +90,13 @@ func (s *store) RemoveContext(name string) error {
 }
 
 func (s *store) GetContextMetadata(name string) (ContextMetadata, error) {
-	res, err := s.meta.get(idOf(name))
+	res, err := s.meta.get(contextdirOf(name))
 	patchErrContextName(err, name)
 	return res, err
 }
 
 func (s *store) ResetContextTLSMaterial(name string, data *ContextTLSData) error {
-	id := idOf(name)
+	id := contextdirOf(name)
 	if err := s.tls.removeAllContextData(id); err != nil {
 		return patchErrContextName(err, name)
 	}
@@ -107,7 +114,7 @@ func (s *store) ResetContextTLSMaterial(name string, data *ContextTLSData) error
 }
 
 func (s *store) ResetContextEndpointTLSMaterial(contextName string, endpointName string, data *EndpointTLSData) error {
-	id := idOf(contextName)
+	id := contextdirOf(contextName)
 	if err := s.tls.removeAllEndpointData(id, endpointName); err != nil {
 		return patchErrContextName(err, contextName)
 	}
@@ -123,13 +130,21 @@ func (s *store) ResetContextEndpointTLSMaterial(contextName string, endpointName
 }
 
 func (s *store) ListContextTLSFiles(name string) (map[string]EndpointFiles, error) {
-	res, err := s.tls.listContextData(idOf(name))
+	res, err := s.tls.listContextData(contextdirOf(name))
 	return res, patchErrContextName(err, name)
 }
 
 func (s *store) GetContextTLSData(contextName, endpointName, fileName string) ([]byte, error) {
-	res, err := s.tls.getData(idOf(contextName), endpointName, fileName)
+	res, err := s.tls.getData(contextdirOf(contextName), endpointName, fileName)
 	return res, patchErrContextName(err, contextName)
+}
+
+func (s *store) GetContextStorageInfo(contextName string) ContextStorageInfo {
+	dir := contextdirOf(contextName)
+	return ContextStorageInfo{
+		MetadataDir: s.meta.contextDir(dir),
+		TLSDir:      s.tls.contextDir(dir),
+	}
 }
 
 // Export exports an existing namespace into an opaque data stream
@@ -305,10 +320,10 @@ func IsErrTLSDataDoesNotExist(err error) bool {
 	return ok
 }
 
-type identifier string
+type contextdir string
 
-func idOf(name string) identifier {
-	return identifier(digest.FromString(name).Encoded())
+func contextdirOf(name string) contextdir {
+	return contextdir(digest.FromString(name).Encoded())
 }
 
 func patchErrContextName(err error, name string) error {

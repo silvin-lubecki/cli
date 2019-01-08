@@ -12,19 +12,19 @@ type tlsStore struct {
 	root string
 }
 
-func (s *tlsStore) contextDir(id identifier) string {
+func (s *tlsStore) contextDir(id contextdir) string {
 	return filepath.Join(s.root, string(id))
 }
 
-func (s *tlsStore) endpointDir(contextID identifier, name string) string {
+func (s *tlsStore) endpointDir(contextID contextdir, name string) string {
 	return filepath.Join(s.root, string(contextID), name)
 }
 
-func (s *tlsStore) filePath(contextID identifier, endpointName, filename string) string {
+func (s *tlsStore) filePath(contextID contextdir, endpointName, filename string) string {
 	return filepath.Join(s.root, string(contextID), endpointName, filename)
 }
 
-func (s *tlsStore) createOrUpdate(contextID identifier, endpointName, filename string, data []byte) error {
+func (s *tlsStore) createOrUpdate(contextID contextdir, endpointName, filename string, data []byte) error {
 	epdir := s.endpointDir(contextID, endpointName)
 	parentOfRoot := filepath.Dir(s.root)
 	if err := os.MkdirAll(parentOfRoot, 0755); err != nil {
@@ -36,7 +36,7 @@ func (s *tlsStore) createOrUpdate(contextID identifier, endpointName, filename s
 	return ioutil.WriteFile(s.filePath(contextID, endpointName, filename), data, 0600)
 }
 
-func (s *tlsStore) getData(contextID identifier, endpointName, filename string) ([]byte, error) {
+func (s *tlsStore) getData(contextID contextdir, endpointName, filename string) ([]byte, error) {
 	data, err := ioutil.ReadFile(s.filePath(contextID, endpointName, filename))
 	if err != nil {
 		return nil, convertTLSDataDoesNotExist(endpointName, filename, err)
@@ -44,7 +44,7 @@ func (s *tlsStore) getData(contextID identifier, endpointName, filename string) 
 	return data, nil
 }
 
-func (s *tlsStore) remove(contextID identifier, endpointName, filename string) error {
+func (s *tlsStore) remove(contextID contextdir, endpointName, filename string) error {
 	err := os.Remove(s.filePath(contextID, endpointName, filename))
 	if os.IsNotExist(err) {
 		return nil
@@ -52,15 +52,15 @@ func (s *tlsStore) remove(contextID identifier, endpointName, filename string) e
 	return err
 }
 
-func (s *tlsStore) removeAllEndpointData(contextID identifier, endpointName string) error {
+func (s *tlsStore) removeAllEndpointData(contextID contextdir, endpointName string) error {
 	return os.RemoveAll(s.endpointDir(contextID, endpointName))
 }
 
-func (s *tlsStore) removeAllContextData(contextID identifier) error {
+func (s *tlsStore) removeAllContextData(contextID contextdir) error {
 	return os.RemoveAll(s.contextDir(contextID))
 }
 
-func (s *tlsStore) listContextData(contextID identifier) (map[string]EndpointFiles, error) {
+func (s *tlsStore) listContextData(contextID contextdir) (map[string]EndpointFiles, error) {
 	epFSs, err := ioutil.ReadDir(s.contextDir(contextID))
 	if err != nil {
 		if os.IsNotExist(err) {
