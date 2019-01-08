@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -389,10 +388,6 @@ func (cli *DockerCli) StackOrchestrator(flagValue string) (Orchestrator, error) 
 	return GetStackOrchestrator(flagValue, ctxOrchestrator, configFile.StackOrchestrator, cli.Err())
 }
 
-func warnCurrentContextNotFound(name string, stderr io.Writer) {
-	fmt.Fprintf(stderr, "WARNING: current context %q is not found on filesystem. Falling back to default Docker endpoint\n", name)
-}
-
 // DockerEndpoint returns the current docker endpoint
 func (cli *DockerCli) DockerEndpoint() docker.Endpoint {
 	return cli.dockerEndpoint
@@ -463,8 +458,7 @@ func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigF
 	if config != nil && config.CurrentContext != "" {
 		_, err := contextstore.GetContextMetadata(config.CurrentContext)
 		if store.IsErrContextDoesNotExist(err) {
-			warnCurrentContextNotFound(config.CurrentContext, stderr)
-			return "", nil
+			return "", errors.Errorf("Current context %q is not found on the file system, please check your config file at %s", config.CurrentContext, config.Filename)
 		}
 		return config.CurrentContext, err
 	}
