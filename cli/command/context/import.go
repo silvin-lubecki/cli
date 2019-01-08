@@ -13,7 +13,7 @@ import (
 
 func newImportCommand(dockerCli command.Cli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "import [OPTIONS] CONTEXT FILE|-",
+		Use:   "import CONTEXT FILE|-",
 		Short: "Import a context from a tar file",
 		Args:  cli.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
