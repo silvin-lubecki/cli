@@ -2,7 +2,6 @@ package context
 
 import (
 	"fmt"
-	"github.com/docker/docker/client"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/docker/cli/cli/context/docker"
 	"github.com/docker/cli/cli/context/kubernetes"
 	"github.com/docker/cli/cli/context/store"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/homedir"
 	"github.com/pkg/errors"
 )

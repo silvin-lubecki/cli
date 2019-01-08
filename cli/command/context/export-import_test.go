@@ -3,12 +3,12 @@ package context
 import (
 	"bytes"
 	"fmt"
-	"github.com/docker/cli/cli/command"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/docker/cli/cli/command"
 	"gotest.tools/assert"
 )
 
