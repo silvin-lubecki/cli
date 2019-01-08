@@ -181,7 +181,7 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 	cli.configFile = cliconfig.LoadDefaultConfigFile(cli.err)
 	var err error
 	cli.contextStore = store.New(cliconfig.ContextStoreDir(), storeConfig)
-	cli.currentContext, err = resolveContextName(opts.Common, cli.configFile, cli.contextStore, cli.err)
+	cli.currentContext, err = resolveContextName(opts.Common, cli.configFile, cli.contextStore)
 	if err != nil {
 		return err
 	}
@@ -223,7 +223,7 @@ func (cli *DockerCli) Initialize(opts *cliflags.ClientOptions) error {
 // NewAPIClientFromFlags creates a new APIClient from command line flags
 func NewAPIClientFromFlags(opts *cliflags.CommonOptions, configFile *configfile.ConfigFile) (client.APIClient, error) {
 	store := store.New(cliconfig.ContextStoreDir(), storeConfig)
-	contextName, err := resolveContextName(opts, configFile, store, os.Stderr)
+	contextName, err := resolveContextName(opts, configFile, store)
 	if err != nil {
 		return nil, err
 	}
@@ -439,7 +439,7 @@ func UserAgent() string {
 // - if DOCKER_CONTEXT is set, use this value
 // - if Config file has a globally set "CurrentContext", use this value
 // - fallbacks to default HOST, uses TLS config from flags/env vars
-func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigFile, contextstore store.Store, stderr io.Writer) (string, error) {
+func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigFile, contextstore store.Store) (string, error) {
 	if opts.Context != "" && len(opts.Hosts) > 0 {
 		return "", errors.New("Conflicting options: either specify --host or --context, not bot")
 	}
