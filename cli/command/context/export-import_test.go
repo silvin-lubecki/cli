@@ -39,7 +39,7 @@ func TestExportImportWithFile(t *testing.T) {
 	assert.Equal(t, "test2", context2.Name)
 
 	assert.Equal(t, "test2\n", cli.OutBuffer().String())
-	assert.Equal(t, "Context \"test2\" has been imported\n", cli.ErrBuffer().String())
+	assert.Equal(t, "Successfully imported context \"test2\"\n", cli.ErrBuffer().String())
 }
 
 func TestExportImportPipe(t *testing.T) {
@@ -67,7 +67,7 @@ func TestExportImportPipe(t *testing.T) {
 	assert.Equal(t, "test2", context2.Name)
 
 	assert.Equal(t, "test2\n", cli.OutBuffer().String())
-	assert.Equal(t, "Context \"test2\" has been imported\n", cli.ErrBuffer().String())
+	assert.Equal(t, "Successfully imported context \"test2\"\n", cli.ErrBuffer().String())
 }
 
 func TestExportKubeconfig(t *testing.T) {
@@ -105,9 +105,6 @@ func TestExportExistingFile(t *testing.T) {
 	createTestContextWithKube(t, cli)
 	cli.ErrBuffer().Reset()
 	assert.NilError(t, ioutil.WriteFile(contextFile, []byte{}, 0644))
-	assert.ErrorContains(t, runExport(cli, &exportOptions{
-		contextName: "test",
-		dest:        contextFile,
-	}), "exists")
-
+	err = runExport(cli, &exportOptions{contextName: "test", dest: contextFile})
+	assert.Assert(t, os.IsExist(err))
 }

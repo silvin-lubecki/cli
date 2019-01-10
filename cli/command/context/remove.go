@@ -33,7 +33,9 @@ func runRemove(dockerCli command.Cli, opts removeOptions, names []string) error 
 	var errs []string
 	currentCtx := dockerCli.CurrentContext()
 	for _, name := range names {
-		if err := doRemove(dockerCli, name, name == currentCtx, opts.force); err != nil {
+		if name == "default" {
+			errs = append(errs, `default: context "default" cannot be removed`)
+		} else if err := doRemove(dockerCli, name, name == currentCtx, opts.force); err != nil {
 			errs = append(errs, fmt.Sprintf("%s: %s", name, err))
 		} else {
 			fmt.Fprintln(dockerCli.Out(), name)

@@ -1,31 +1,31 @@
 [
     {
-        "name": "current",
-        "metadata": {
-            "description": "description of current",
-            "stack_orchestrator": "all"
+        "Name": "current",
+        "Metadata": {
+            "Description": "description of current",
+            "StackOrchestrator": "all"
         },
-        "endpoints": {
+        "Endpoints": {
             "docker": {
-                "host": "https://someswarmserver",
-                "skip_tls_verify": false
+                "Host": "https://someswarmserver",
+                "SkipTLSVerify": false
             },
             "kubernetes": {
-                "host": "https://someserver",
-                "skip_tls_verify": false,
-                "default_namespace": "default"
+                "Host": "https://someserver",
+                "SkipTLSVerify": false,
+                "DefaultNamespace": "default"
             }
         },
-        "tls-material": {
+        "TLSMaterial": {
             "kubernetes": [
                 "ca.pem",
                 "cert.pem",
                 "key.pem"
             ]
         },
-        "storage": {
-            "metadata_path": "<METADATA_PATH>",
-            "tls_path": "<TLS_PATH>"
+        "Storage": {
+            "MetadataPath": "<METADATA_PATH>",
+            "TLSPath": "<TLS_PATH>"
         }
     }
 ]

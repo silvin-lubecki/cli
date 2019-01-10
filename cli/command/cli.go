@@ -441,7 +441,7 @@ func UserAgent() string {
 // - fallbacks to default HOST, uses TLS config from flags/env vars
 func resolveContextName(opts *cliflags.CommonOptions, config *configfile.ConfigFile, contextstore store.Store) (string, error) {
 	if opts.Context != "" && len(opts.Hosts) > 0 {
-		return "", errors.New("Conflicting options: either specify --host or --context, not bot")
+		return "", errors.New("Conflicting options: either specify --host or --context, not both")
 	}
 	if opts.Context != "" {
 		return opts.Context, nil

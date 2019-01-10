@@ -1,3 +1,0 @@
-NAME                DESCRIPTION              DOCKER ENDPOINT           KUBERNETES ENDPOINT            ORCHESTRATOR
-current *           description of current   https://someswarmserver   https://someserver (default)   
-other               description of other     https://someswarmserver   https://someserver (default)   all

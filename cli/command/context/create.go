@@ -121,7 +121,7 @@ func runCreate(cli command.Cli, o *createOptions) error {
 		return err
 	}
 	fmt.Fprintln(cli.Out(), o.name)
-	fmt.Fprintf(cli.Err(), "Context %q has been created\n", o.name)
+	fmt.Fprintf(cli.Err(), "Successfully created context %q\n", o.name)
 	return nil
 }
 

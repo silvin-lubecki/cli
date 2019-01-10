@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
@@ -10,6 +11,7 @@ import (
 	kubecontext "github.com/docker/cli/cli/context/kubernetes"
 	"github.com/docker/cli/kubernetes"
 	"github.com/spf13/cobra"
+	"vbom.ml/util/sortorder"
 )
 
 type listOptions struct {
@@ -30,12 +32,15 @@ func newListCommand(dockerCli command.Cli) *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&opts.format, "format", formatter.TableFormatKey, "Pretty-print contexts using a Go template")
+	flags.StringVar(&opts.format, "format", "", "Pretty-print contexts using a Go template")
 	flags.BoolVarP(&opts.quiet, "quiet", "q", false, "Only show context names")
 	return cmd
 }
 
 func runList(dockerCli command.Cli, opts *listOptions) error {
+	if opts.format == "" {
+		opts.format = formatter.TableFormatKey
+	}
 	curContext := dockerCli.CurrentContext()
 	contextMap, err := dockerCli.ContextStore().ListContexts()
 	if err != nil {
@@ -66,28 +71,32 @@ func runList(dockerCli command.Cli, opts *listOptions) error {
 		}
 		contexts = append(contexts, &desc)
 	}
-	if dockerCli.CurrentContext() == "" && !opts.quiet {
-		orchestrator, _ := dockerCli.StackOrchestrator("")
-		kubEndpointText := ""
-		kubeconfig := kubernetes.NewKubernetesConfig("")
-		if cfg, err := kubeconfig.ClientConfig(); err == nil {
-			ns, _, _ := kubeconfig.Namespace()
-			if ns == "" {
-				ns = "default"
-			}
-			kubEndpointText = fmt.Sprintf("%s (%s)", cfg.Host, ns)
-		}
-		// prepend a "virtual context"
+	if !opts.quiet {
 		desc := &formatter.ClientContext{
-			Name:               "default",
-			Current:            true,
-			Description:        "Current DOCKER_HOST based configuration",
-			StackOrchestrator:  string(orchestrator),
-			DockerEndpoint:     dockerCli.DockerEndpoint().Host,
-			KubernetesEndpoint: kubEndpointText,
+			Name:        "default",
+			Description: "Current DOCKER_HOST based configuration",
 		}
-		contexts = append([]*formatter.ClientContext{desc}, contexts...)
+		if dockerCli.CurrentContext() == "" {
+			orchestrator, _ := dockerCli.StackOrchestrator("")
+			kubEndpointText := ""
+			kubeconfig := kubernetes.NewKubernetesConfig("")
+			if cfg, err := kubeconfig.ClientConfig(); err == nil {
+				ns, _, _ := kubeconfig.Namespace()
+				if ns == "" {
+					ns = "default"
+				}
+				kubEndpointText = fmt.Sprintf("%s (%s)", cfg.Host, ns)
+			}
+			desc.Current = true
+			desc.StackOrchestrator = string(orchestrator)
+			desc.DockerEndpoint = dockerCli.DockerEndpoint().Host
+			desc.KubernetesEndpoint = kubEndpointText
+		}
+		contexts = append(contexts, desc)
 	}
+	sort.Slice(contexts, func(i, j int) bool {
+		return sortorder.NaturalLess(contexts[i].Name, contexts[j].Name)
+	})
 	return format(dockerCli, opts, contexts)
 }
 

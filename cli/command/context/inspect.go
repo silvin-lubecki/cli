@@ -40,6 +40,9 @@ func newInspectCommand(dockerCli command.Cli) *cobra.Command {
 
 func runInspect(dockerCli command.Cli, opts inspectOptions) error {
 	getRefFunc := func(ref string) (interface{}, []byte, error) {
+		if ref == "default" {
+			return nil, nil, errors.New(`context "default" cannot be inspected`)
+		}
 		c, err := dockerCli.ContextStore().GetContextMetadata(ref)
 		if err != nil {
 			return nil, nil, err
@@ -59,6 +62,6 @@ func runInspect(dockerCli command.Cli, opts inspectOptions) error {
 
 type contextWithTLSListing struct {
 	store.ContextMetadata
-	TLSMaterial map[string]store.EndpointFiles `json:"tls-material,omitempty"`
-	Storage     store.ContextStorageInfo       `json:"storage,omitempty"`
+	TLSMaterial map[string]store.EndpointFiles
+	Storage     store.ContextStorageInfo
 }

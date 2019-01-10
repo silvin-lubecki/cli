@@ -33,7 +33,7 @@ func TestUpdateDescriptionOnly(t *testing.T) {
 	assert.Equal(t, dc.Description, "description")
 
 	assert.Equal(t, "test\n", cli.OutBuffer().String())
-	assert.Equal(t, "Context \"test\" has been updated\n", cli.ErrBuffer().String())
+	assert.Equal(t, "Successfully updated context \"test\"\n", cli.ErrBuffer().String())
 }
 
 func TestUpdateDockerOnly(t *testing.T) {

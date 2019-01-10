@@ -1,11 +1,9 @@
 package context
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/cli/cli/command/formatter"
 	"github.com/docker/cli/cli/context/docker"
 	"gotest.tools/assert"
 	"gotest.tools/env"
@@ -31,25 +29,11 @@ func TestList(t *testing.T) {
 	defer cleanup()
 	createTestContextWithKubeAndSwarm(t, cli, "current", "all")
 	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
+	createTestContextWithKubeAndSwarm(t, cli, "unset", "unset")
 	cli.SetCurrentContext("current")
 	cli.OutBuffer().Reset()
-	assert.NilError(t, runList(cli, &listOptions{
-		format: formatter.TableFormatKey,
-	}))
+	assert.NilError(t, runList(cli, &listOptions{}))
 	golden.Assert(t, cli.OutBuffer().String(), "list.golden")
-}
-
-func TestListUnset(t *testing.T) {
-	cli, cleanup := makeFakeCli(t)
-	defer cleanup()
-	createTestContextWithKubeAndSwarm(t, cli, "current", "unset")
-	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
-	cli.SetCurrentContext("current")
-	cli.OutBuffer().Reset()
-	assert.NilError(t, runList(cli, &listOptions{
-		format: formatter.TableFormatKey,
-	}))
-	golden.Assert(t, cli.OutBuffer().String(), "list.unset.golden")
 }
 
 func TestListNoContext(t *testing.T) {
@@ -62,9 +46,7 @@ func TestListNoContext(t *testing.T) {
 		},
 	})
 	cli.OutBuffer().Reset()
-	assert.NilError(t, runList(cli, &listOptions{
-		format: formatter.TableFormatKey,
-	}))
+	assert.NilError(t, runList(cli, &listOptions{}))
 	golden.Assert(t, cli.OutBuffer().String(), "list.no-context.golden")
 }
 
@@ -75,24 +57,6 @@ func TestListQuiet(t *testing.T) {
 	createTestContextWithKubeAndSwarm(t, cli, "other", "all")
 	cli.SetCurrentContext("current")
 	cli.OutBuffer().Reset()
-	assert.NilError(t, runList(cli, &listOptions{
-		format: formatter.TableFormatKey,
-		quiet:  true,
-	}))
+	assert.NilError(t, runList(cli, &listOptions{quiet: true}))
 	golden.Assert(t, cli.OutBuffer().String(), "quiet-list.golden")
-}
-
-func TestInspect(t *testing.T) {
-	cli, cleanup := makeFakeCli(t)
-	defer cleanup()
-	createTestContextWithKubeAndSwarm(t, cli, "current", "all")
-	cli.OutBuffer().Reset()
-	assert.NilError(t, runInspect(cli, inspectOptions{
-		refs: []string{"current"},
-	}))
-	expected := string(golden.Get(t, "inspect.golden"))
-	si := cli.ContextStore().GetContextStorageInfo("current")
-	expected = strings.Replace(expected, "<METADATA_PATH>", strings.Replace(si.MetadataPath, `\`, `\\`, -1), 1)
-	expected = strings.Replace(expected, "<TLS_PATH>", strings.Replace(si.TLSPath, `\`, `\\`, -1), 1)
-	assert.Equal(t, cli.OutBuffer().String(), expected)
 }

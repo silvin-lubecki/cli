@@ -30,15 +30,15 @@ type Store interface {
 
 // ContextMetadata contains metadata about a context and its endpoints
 type ContextMetadata struct {
-	Name      string                 `json:"name,omitempty"`
-	Metadata  interface{}            `json:"metadata,omitempty"`
-	Endpoints map[string]interface{} `json:"endpoints,omitempty"`
+	Name      string                 `json:",omitempty"`
+	Metadata  interface{}            `json:",omitempty"`
+	Endpoints map[string]interface{} `json:",omitempty"`
 }
 
 // ContextStorageInfo contains data about where a given context is stored
 type ContextStorageInfo struct {
-	MetadataPath string `json:"metadata_path,omitempty"`
-	TLSPath      string `json:"tls_path,omitempty"`
+	MetadataPath string
+	TLSPath      string
 }
 
 // EndpointTLSData represents tls data for a given endpoint
@@ -296,6 +296,9 @@ func (e *contextDoesNotExistError) setContext(name string) {
 	e.name = name
 }
 
+// NotFound satisfies interface github.com/docker/docker/errdefs.ErrNotFound
+func (e *contextDoesNotExistError) NotFound() {}
+
 type tlsDataDoesNotExistError struct {
 	context, endpoint, file string
 }
@@ -307,6 +310,9 @@ func (e *tlsDataDoesNotExistError) Error() string {
 func (e *tlsDataDoesNotExistError) setContext(name string) {
 	e.context = name
 }
+
+// NotFound satisfies interface github.com/docker/docker/errdefs.ErrNotFound
+func (e *tlsDataDoesNotExistError) NotFound() {}
 
 // IsErrContextDoesNotExist checks if the given error is a "context does not exist" condition
 func IsErrContextDoesNotExist(err error) bool {

@@ -126,7 +126,7 @@ func runUpdate(cli command.Cli, o *updateOptions) error {
 	}
 
 	fmt.Fprintln(cli.Out(), o.name)
-	fmt.Fprintf(cli.Err(), "Context %q has been updated\n", o.name)
+	fmt.Fprintf(cli.Err(), "Successfully updated context %q\n", o.name)
 	return nil
 }
 
