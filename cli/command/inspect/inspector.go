@@ -7,10 +7,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/docker/cli/cli"
-	"github.com/docker/cli/templates"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/docker/cli/cli"
+	"github.com/docker/cli/templates"
 )
 
 // Inspector defines an interface to implement to process elements
@@ -38,7 +39,7 @@ func NewTemplateInspector(outputStream io.Writer, tmpl *template.Template) Inspe
 // NewTemplateInspectorFromString creates a new TemplateInspector from a string
 // which is compiled into a template.
 func NewTemplateInspectorFromString(out io.Writer, tmplStr string) (Inspector, error) {
-	if tmplStr == "" {
+	if tmplStr == "" || tmplStr == "json" {
 		return NewIndentedInspector(out), nil
 	}
 
