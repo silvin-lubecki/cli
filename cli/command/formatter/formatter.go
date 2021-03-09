@@ -7,9 +7,8 @@ import (
 	"text/tabwriter"
 	"text/template"
 
-	"github.com/pkg/errors"
-
 	"github.com/docker/cli/templates"
+	"github.com/pkg/errors"
 )
 
 // Format keys used to specify certain kinds of output formats
@@ -20,8 +19,7 @@ const (
 	JSONFormatKey   = "json"
 
 	DefaultQuietFormat = "{{.ID}}"
-
-	jsonFormat = "{{json .}}"
+	jsonFormat         = "{{json .}}"
 )
 
 // Format is the format string rendered using the Context
